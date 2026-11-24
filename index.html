@@ -123,6 +123,19 @@
   .list li.empty { background: transparent; color: var(--muted); cursor: default; padding-left: 0; }
   .list .g { font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; font-size: .85rem; }
   #tab-food .list { margin-top: 12px; }
+  /* Sans emballage : fond orange */
+  #tab-food { background: var(--orange); border-color: var(--yellow); color: var(--black); }
+  #tab-food::before, #tab-food::after { color: var(--black); }
+  #tab-food input[type=search] { background: var(--white); color: var(--black); border-color: var(--black); }
+  #tab-food input::placeholder { color: #666; }
+  #tab-food .note { color: var(--black); }
+  #tab-food .list li { --k: var(--green); }
+  #tab-food .list li:nth-child(4n+2) { --k: var(--yellow); }
+  #tab-food .list li:nth-child(4n+3) { --k: var(--white); }
+  #tab-food .list li:nth-child(4n+4) { --k: var(--blue); color: var(--white); }
+  /* Champ « tape le code-barres » : fond jaune */
+  #codeInput { background: var(--yellow); color: var(--black); border-color: var(--yellow); font-weight: 600; }
+  #codeInput::placeholder { color: #5a5000; }
   .status { color: var(--white); font-size: .9rem; margin: 10px 0 0; min-height: 1.2em; }
   .status a { color: var(--c); font-weight: 700; }
 
