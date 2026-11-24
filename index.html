@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<title>Combien de sucre ?</title>
+<style>
+  :root {
+    --bg: #f6f4ef; --card: #ffffff; --ink: #1c1917; --muted: #6b6560; --line: #e7e2da;
+    --brand: #0f766e; --brand-ink: #ffffff; --ok: #15803d; --mid: #b45309; --bad: #b91c1c;
+    --cube: #fffdf8; --cube-edge: #d6cfc2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #151413; --card: #1f1d1b; --ink: #f2efe9; --muted: #a39d95; --line: #34302c;
+      --brand: #2dd4bf; --brand-ink: #0b1514; --ok: #4ade80; --mid: #fbbf24; --bad: #f87171;
+      --cube: #f4efe4; --cube-edge: #8a8274; }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink);
+    font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 560px; margin: 0 auto; padding: 16px 16px 96px; }
+  h1 { font-size: 1.5rem; margin: 8px 0 2px; }
+  .sub { color: var(--muted); margin: 0 0 16px; font-size: .95rem; }
+  .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; background: var(--line);
+    padding: 4px; border-radius: 12px; margin-bottom: 14px; }
+  .tabs button { border: 0; background: transparent; color: var(--ink); padding: 10px 4px; border-radius: 9px;
+    font: inherit; font-size: .9rem; font-weight: 600; cursor: pointer; }
+  .tabs button[aria-selected="true"] { background: var(--card); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 14px; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%;
+    border: 0; border-radius: 12px; padding: 14px; font: inherit; font-weight: 700; cursor: pointer;
+    background: var(--brand); color: var(--brand-ink); }
+  .btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); font-weight: 600; }
+  .row { display: flex; gap: 8px; }
+  input[type=text], input[type=number], input[type=search] { width: 100%; padding: 12px; border-radius: 10px;
+    border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; }
+  #reader { width: 100%; border-radius: 12px; overflow: hidden; background: #000; min-height: 0; }
+  #reader video { border-radius: 12px; }
+  .hidden { display: none !important; }
+  .product { display: flex; gap: 12px; align-items: center; margin-bottom: 12px; }
+  .product img { width: 64px; height: 64px; object-fit: contain; border-radius: 10px; background: #fff; flex: none; }
+  .product h2 { font-size: 1.1rem; margin: 0; }
+  .product p { margin: 0; color: var(--muted); font-size: .9rem; }
+  .big { font-size: 2.6rem; font-weight: 800; line-height: 1; }
+  .big small { font-size: 1rem; font-weight: 600; color: var(--muted); }
+  .cubes { display: flex; flex-wrap: wrap; gap: 5px; margin: 14px 0 10px; }
+  .cube { width: 26px; height: 26px; border-radius: 5px; background: var(--cube);
+    border: 1.5px solid var(--cube-edge); box-shadow: inset -3px -3px 0 rgba(0,0,0,.07); position: relative; overflow: hidden; }
+  .cube.part { background: transparent; }
+  .cube.part::after { content: ""; position: absolute; inset: 0; width: var(--f); background: var(--cube); }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+  .chip { border: 1px solid var(--line); background: var(--bg); color: var(--ink); border-radius: 999px;
+    padding: 7px 12px; font: inherit; font-size: .88rem; cursor: pointer; }
+  .chip[aria-pressed="true"] { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
+  .meter { height: 10px; background: var(--line); border-radius: 99px; overflow: hidden; margin: 6px 0 4px; }
+  .meter > i { display: block; height: 100%; border-radius: 99px; }
+  .verdict { font-weight: 700; }
+  .note { color: var(--muted); font-size: .85rem; margin: 8px 0 0; }
+  .list { list-style: none; padding: 0; margin: 0; }
+  .list li { display: flex; justify-content: space-between; gap: 10px; padding: 11px 2px;
+    border-bottom: 1px solid var(--line); cursor: pointer; }
+  .list li:last-child { border-bottom: 0; }
+  .list .g { color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .status { color: var(--muted); font-size: .9rem; margin: 10px 0 0; min-height: 1.2em; }
+  .today { position: fixed; left: 0; right: 0; bottom: 0; background: var(--card); border-top: 1px solid var(--line);
+    padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); }
+  .today .in { max-width: 560px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
+  .today .meter { flex: 1; margin: 0; }
+  .today b { white-space: nowrap; }
+  .today button { background: none; border: 0; color: var(--muted); font: inherit; font-size: .8rem; cursor: pointer; }
+  label.lbl { display: block; font-weight: 600; margin: 4px 0 6px; font-size: .92rem; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Combien de sucre ?</h1>
+  <p class="sub">Scanne un produit, photographie son étiquette ou cherche un aliment : on te montre le sucre en morceaux.</p>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="scan">Code-barres</button>
+    <button role="tab" aria-selected="false" data-tab="label">Étiquette</button>
+    <button role="tab" aria-selected="false" data-tab="food">Sans emballage</button>
+  </div>
+
+  <!-- Code-barres -->
+  <section id="tab-scan" class="card">
+    <div id="reader" class="hidden"></div>
+    <button class="btn" id="startScan">📷 Ouvrir la caméra</button>
+    <button class="btn ghost hidden" id="stopScan" style="margin-top:8px">Arrêter la caméra</button>
+    <div class="row" style="margin-top:12px">
+      <input type="text" id="codeInput" inputmode="numeric" placeholder="ou tape le code-barres">
+      <button class="btn" style="width:auto;padding:0 18px" id="codeGo">OK</button>
+    </div>
+    <p class="status" id="scanStatus"></p>
+  </section>
+
+  <!-- Étiquette -->
+  <section id="tab-label" class="card hidden">
+    <p style="margin-top:0">Produit inconnu ou sans code-barres ? Prends en photo le <b>tableau nutritionnel</b>. On lit la ligne « dont sucres ».</p>
+    <input type="file" id="labelFile" accept="image/*" capture="environment" class="hidden">
+    <button class="btn" id="labelBtn">📸 Photographier l'étiquette</button>
+    <p class="status" id="labelStatus"></p>
+    <div id="labelManual" class="hidden">
+      <label class="lbl" for="labelSugar">Sucres pour 100 g / 100 ml (vérifie le chiffre)</label>
+      <div class="row">
+        <input type="number" id="labelSugar" step="0.1" min="0" max="100">
+        <button class="btn" style="width:auto;padding:0 18px" id="labelGo">OK</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sans emballage -->
+  <section id="tab-food" class="card hidden">
+    <input type="search" id="foodSearch" placeholder="Cherche : purée, jus d'orange, mangue…">
+    <ul class="list" id="foodList" style="margin-top:8px"></ul>
+    <p class="note">🌺 = produits du fenua. Valeurs moyennes indicatives (tables nutritionnelles type Ciqual) ; pour les plats maison (po'e, firifiri, pain coco…), ce sont des estimations : la recette change beaucoup le résultat.</p>
+  </section>
+
+  <!-- Résultat -->
+  <section id="result" class="card hidden" aria-live="polite">
+    <div class="product">
+      <img id="rImg" alt="" class="hidden">
+      <div><h2 id="rName"></h2><p id="rMeta"></p></div>
+    </div>
+    <div class="chips" id="portionChips"></div>
+    <div class="row hidden" id="customRow" style="margin-bottom:8px">
+      <input type="number" id="customQty" min="1" step="1" placeholder="Quantité">
+      <span style="align-self:center" id="customUnit">g</span>
+    </div>
+    <div class="big"><span id="rCubes">0</span> <small>morceaux de sucre</small></div>
+    <div class="cubes" id="rCubeViz" aria-hidden="true"></div>
+    <p style="margin:0"><b id="rGrams">0 g</b> de sucres · <span id="rPer100"></span></p>
+    <div class="meter"><i id="rMeter"></i></div>
+    <p style="margin:0" class="verdict" id="rVerdict"></p>
+    <p class="note" id="rNote"></p>
+    <button class="btn" id="addToday" style="margin-top:12px">＋ Je le consomme (ajouter à ma journée)</button>
+  </section>
+
+  <section class="card" id="historyCard">
+    <h2 style="font-size:1.05rem;margin:0 0 6px">Aujourd'hui</h2>
+    <ul class="list" id="todayList"></ul>
+    <p class="note">1 morceau de sucre ≈ 4 g. Repère OMS : idéalement moins de 25 g de sucres ajoutés par jour pour un adulte (6 morceaux), 50 g maximum.</p>
+  </section>
+</main>
+
+<div class="today">
+  <div class="in">
+    <b id="todayTotal">0 morceau</b>
+    <div class="meter"><i id="todayMeter"></i></div>
+    <button id="resetToday">Remettre à zéro</button>
+  </div>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+const CUBE_G = 4, IDEAL = 25, MAX = 50;
+
+// --- Aliments sans emballage (g de sucres / 100 g ou 100 ml, portion type) ---
+const FOODS = [
+  ["Purée de pommes de terre maison", 1.5, 200, "g"],
+  ["Purée en flocons (préparée au lait)", 3, 200, "g"],
+  ["Compote de pommes sans sucre ajouté", 11, 100, "g"],
+  ["Compote de pommes sucrée", 18, 100, "g"],
+  ["Fruits au sirop (boîte)", 16, 150, "g"],
+  ["Maïs doux en conserve", 4.5, 100, "g"],
+  ["Haricots blancs sauce tomate (conserve)", 5, 200, "g"],
+  ["Petits pois-carottes (conserve)", 3, 150, "g"],
+  ["Sauce tomate cuisinée", 6, 100, "g"],
+  ["Ketchup", 22, 15, "g"],
+  ["Lait concentré sucré", 54, 30, "g"],
+  ["Soda type cola", 10.6, 330, "ml"],
+  ["Soda citron / orange", 9, 330, "ml"],
+  ["Boisson énergisante", 11, 250, "ml"],
+  ["Thé glacé", 7, 330, "ml"],
+  ["Jus d'orange pressé", 8.5, 250, "ml"],
+  ["Jus de fruits (brique, 100 % jus)", 9.5, 250, "ml"],
+  ["Nectar de fruits", 12, 250, "ml"],
+  ["Sirop dilué (1 vol. pour 7)", 9, 250, "ml"],
+  ["Eau de coco", 2.6, 330, "ml"],
+  ["Lait entier", 4.8, 250, "ml"],
+  ["Lait chocolaté", 9, 250, "ml"],
+  ["Yaourt nature", 4.5, 125, "g"],
+  ["Yaourt aux fruits", 13, 125, "g"],
+  ["Crème dessert chocolat", 18, 115, "g"],
+  ["Céréales petit-déjeuner chocolatées", 25, 40, "g"],
+  ["Pain blanc / baguette", 3, 60, "g"],
+  ["Riz cuit", 0.1, 200, "g"],
+  ["Pâtes cuites", 0.6, 200, "g"],
+  ["Pâte à tartiner chocolat-noisette", 56, 20, "g"],
+  ["Confiture", 50, 20, "g"],
+  ["Miel", 82, 10, "g"],
+  ["Biscuits secs sucrés", 25, 30, "g"],
+  ["Gâteau / pâtisserie", 30, 80, "g"],
+  ["Glace à la vanille", 22, 100, "g"],
+  ["Chocolat au lait", 55, 20, "g"],
+  ["Banane", 12, 120, "g"],
+  ["Pomme", 11, 150, "g"],
+  ["Mangue", 14, 200, "g"],
+  ["Ananas", 10, 150, "g"],
+  ["Papaye", 8, 150, "g"],
+  ["Pastèque", 6, 250, "g"],
+  ["Raisin", 16, 125, "g"],
+  ["Patate douce cuite", 6, 200, "g"],
+];
+// Fenua : plats et produits courants en Polynésie (estimations moyennes, recettes variables)
+const FENUA = [
+  ["Po'e banane", 20, 150, "g"],
+  ["Po'e papaye / potiron", 16, 150, "g"],
+  ["Firifiri", 10, 60, "g"],
+  ["Pain coco (faraoa coco)", 15, 80, "g"],
+  ["Gâteau patate douce", 22, 80, "g"],
+  ["Ipo (pain au lait de coco)", 8, 100, "g"],
+  ["Poisson cru au lait de coco", 2, 250, "g"],
+  ["Chao men", 3, 300, "g"],
+  ["Ma'a tinito", 3, 300, "g"],
+  ["Casse-croûte (sandwich baguette)", 3, 250, "g"],
+  ["Uru (fruit à pain) cuit", 11, 200, "g"],
+  ["Fe'i (banane plantain) cuit", 8, 200, "g"],
+  ["Taro cuit", 0.5, 200, "g"],
+  ["Ufi (igname) cuit", 0.5, 200, "g"],
+  ["Pota au lait de coco", 1.5, 200, "g"],
+  ["Mitihue (coco fermenté)", 3, 30, "g"],
+  ["Lait de coco", 3, 100, "ml"],
+  ["Noix de coco (chair fraîche)", 6, 80, "g"],
+  ["Pamplemousse tahitien", 7, 200, "g"],
+  ["Corossol (tapo'u)", 13, 150, "g"],
+  ["Ramboutan", 16, 100, "g"],
+  ["Litchi", 15, 100, "g"],
+  ["Pomme-cythère (vi tahiti)", 9, 150, "g"],
+  ["Carambole", 4, 100, "g"],
+  ["Fruit de la passion", 11, 50, "g"],
+  ["Jus d'ananas", 10, 250, "ml"],
+  ["Jus de pamplemousse", 8, 250, "ml"],
+  ["Bière (pression, 50 cl)", 0.3, 500, "ml"],
+  ["Café au lait concentré sucré", 9, 200, "ml"],
+];
+FENUA.forEach(f => f.push(true));
+
+// --- Onglets ---
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => {
+  document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-selected", x === b));
+  ["scan", "label", "food"].forEach(t => document.getElementById("tab-" + t).classList.toggle("hidden", t !== b.dataset.tab));
+  if (b.dataset.tab !== "scan") stopScan();
+});
+
+// --- Résultat ---
+let current = null; // {name, meta, img, per100, unit, portions:[{label, qty}], sel}
+function showResult(r) {
+  current = r;
+  document.getElementById("result").classList.remove("hidden");
+  document.getElementById("rName").textContent = r.name;
+  document.getElementById("rMeta").textContent = r.meta || "";
+  const img = document.getElementById("rImg");
+  if (r.img) { img.src = r.img; img.classList.remove("hidden"); } else img.classList.add("hidden");
+  document.getElementById("rPer100").textContent = `${fmt(r.per100)} g pour 100 ${r.unit}`;
+  document.getElementById("customUnit").textContent = r.unit;
+  const chips = document.getElementById("portionChips");
+  chips.innerHTML = "";
+  [...r.portions, { label: "Autre quantité", qty: null }].forEach((p, i) => {
+    const c = document.createElement("button");
+    c.className = "chip"; c.textContent = p.label;
+    c.onclick = () => { r.sel = i; render(); };
+    chips.appendChild(c);
+  });
+  render();
+  document.getElementById("result").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function qtyNow() {
+  const r = current, p = [...r.portions, { qty: null }][r.sel];
+  if (p.qty != null) return p.qty;
+  return Math.max(0, parseFloat(document.getElementById("customQty").value) || 0);
+}
+function render() {
+  const r = current;
+  document.querySelectorAll("#portionChips .chip").forEach((c, i) => c.setAttribute("aria-pressed", i === r.sel));
+  document.getElementById("customRow").classList.toggle("hidden", r.sel !== r.portions.length);
+  const grams = r.per100 * qtyNow() / 100, cubes = grams / CUBE_G;
+  document.getElementById("rCubes").textContent = fmt(cubes, cubes < 10 ? 1 : 0);
+  document.getElementById("rGrams").textContent = `${fmt(grams)} g`;
+  drawCubes(document.getElementById("rCubeViz"), cubes);
+  const pct = grams / IDEAL * 100, m = document.getElementById("rMeter");
+  m.style.width = Math.min(100, pct) + "%";
+  const col = grams < IDEAL * .2 ? "var(--ok)" : grams < IDEAL * .6 ? "var(--mid)" : "var(--bad)";
+  m.style.background = col;
+  const v = document.getElementById("rVerdict");
+  v.style.color = col;
+  v.textContent = grams >= IDEAL ? `Plus que tout le repère d'une journée (${Math.round(pct)} %)`
+    : `${Math.round(pct)} % du repère quotidien (25 g)`;
+  document.getElementById("rNote").textContent = r.note || "";
+}
+function drawCubes(el, cubes) {
+  el.innerHTML = "";
+  const shown = Math.min(cubes, 60), full = Math.floor(shown), frac = shown - full;
+  for (let i = 0; i < full; i++) el.insertAdjacentHTML("beforeend", '<span class="cube"></span>');
+  if (frac > 0.05) el.insertAdjacentHTML("beforeend", `<span class="cube part" style="--f:${Math.round(frac * 100)}%"></span>`);
+  if (cubes > 60) el.insertAdjacentHTML("beforeend", `<span style="align-self:center;color:var(--muted)">+${Math.round(cubes - 60)}</span>`);
+}
+document.getElementById("customQty").oninput = render;
+const fmt = (n, d = 1) => (Math.round(n * 10 ** d) / 10 ** d).toLocaleString("fr-FR");
+
+// --- Code-barres : caméra ---
+let scanner = null, busy = false;
+const st = document.getElementById("scanStatus");
+document.getElementById("startScan").onclick = async () => {
+  if (!window.Html5Qrcode) { st.textContent = "Lecteur indisponible (pas de connexion ?). Tape le code à la main."; return; }
+  document.getElementById("reader").classList.remove("hidden");
+  scanner = scanner || new Html5Qrcode("reader", { formatsToSupport: [
+    Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.EAN_8,
+    Html5QrcodeSupportedFormats.UPC_A, Html5QrcodeSupportedFormats.UPC_E], verbose: false });
+  try {
+    await scanner.start({ facingMode: "environment" }, { fps: 12, qrbox: { width: 260, height: 140 } },
+      code => { if (!busy) { busy = true; stopScan(); lookup(code); } });
+    toggleScanBtns(true);
+    st.textContent = "Vise le code-barres…";
+  } catch (e) {
+    st.textContent = "Caméra refusée ou indisponible. Autorise la caméra, ou tape le code-barres.";
+    document.getElementById("reader").classList.add("hidden");
+  }
+};
+async function stopScan() {
+  if (scanner && scanner.isScanning) { try { await scanner.stop(); } catch {} }
+  document.getElementById("reader").classList.add("hidden");
+  toggleScanBtns(false);
+}
+function toggleScanBtns(on) {
+  document.getElementById("startScan").classList.toggle("hidden", on);
+  document.getElementById("stopScan").classList.toggle("hidden", !on);
+}
+document.getElementById("stopScan").onclick = stopScan;
+document.getElementById("codeGo").onclick = () => {
+  const c = document.getElementById("codeInput").value.replace(/\D/g, "");
+  if (c.length >= 8) lookup(c); else st.textContent = "Un code-barres a 8 ou 13 chiffres.";
+};
+
+// --- Open Food Facts ---
+async function lookup(code) {
+  st.textContent = `Recherche du produit ${code}…`;
+  const fields = "product_name,product_name_fr,brands,quantity,product_quantity,product_quantity_unit,serving_size,serving_quantity,nutriments,image_front_small_url";
+  let data = null;
+  for (let attempt = 0; attempt < 2 && !data; attempt++) {
+    try {
+      const res = await fetch(`https://world.openfoodfacts.org/api/v2/product/${code}.json?fields=${fields}`);
+      if (res.ok || res.status === 404) data = await res.json();
+    } catch {}
+  }
+  busy = false;
+  if (!data) { st.textContent = "Pas de réponse de la base (réseau ?). Réessaie, ou photographie l'étiquette."; return; }
+  const p = data.product;
+  const s = p && p.nutriments && p.nutriments.sugars_100g;
+  const addLink = ` <a href="https://world.openfoodfacts.org/cgi/product.pl?type=add&code=${code}" target="_blank" rel="noopener">Ajoute-le à Open Food Facts</a> pour que tout le fenua en profite.`;
+  if (data.status !== 1 || p == null) { st.innerHTML = "Produit inconnu de la base. Photographie son étiquette (onglet Étiquette)." + addLink; return; }
+  if (s == null) { st.innerHTML = "Produit trouvé, mais sans valeur de sucres. Photographie son étiquette." + addLink; return; }
+  st.textContent = "";
+  const unit = /ml|cl|l$/i.test(p.product_quantity_unit || p.quantity || "") ? "ml" : "g";
+  const portions = [{ label: `100 ${unit}`, qty: 100 }];
+  if (p.serving_quantity > 0) portions.push({ label: `Portion (${p.serving_size || fmt(p.serving_quantity, 0) + " " + unit})`, qty: +p.serving_quantity });
+  if (p.product_quantity > 0) portions.push({ label: `Tout le produit (${p.quantity || fmt(p.product_quantity, 0) + " " + unit})`, qty: +p.product_quantity });
+  const added = p.nutriments["added-sugars_100g"];
+  showResult({
+    name: p.product_name_fr || p.product_name || "Produit " + code,
+    meta: [p.brands, p.quantity].filter(Boolean).join(" · "),
+    img: p.image_front_small_url, per100: +s, unit, portions, sel: portions.length - 1,
+    note: (added != null ? `Dont environ ${fmt(added)} g de sucres ajoutés pour 100 ${unit}. ` : "") + "Source : Open Food Facts.",
+  });
+}
+
+// --- Étiquette : OCR ---
+const ls = document.getElementById("labelStatus");
+document.getElementById("labelBtn").onclick = () => document.getElementById("labelFile").click();
+document.getElementById("labelFile").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  document.getElementById("labelManual").classList.remove("hidden");
+  ls.textContent = "Lecture de l'étiquette… (la 1re fois peut prendre ~20 s)";
+  try {
+    if (!window.Tesseract) await loadScript("https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js");
+    const { data } = await Tesseract.recognize(f, "fra");
+    const v = findSugar(data.text);
+    if (v != null) { document.getElementById("labelSugar").value = v; ls.textContent = `Lu : ${fmt(v)} g de sucres pour 100. Vérifie puis appuie sur OK.`; }
+    else ls.textContent = "Je n'ai pas trouvé la ligne « sucres ». Tape le chiffre lu sur l'étiquette.";
+  } catch { ls.textContent = "Lecture impossible. Tape le chiffre de la ligne « dont sucres »."; }
+  e.target.value = "";
+};
+function findSugar(text) {
+  const t = text.replace(/\r/g, "");
+  const m = t.match(/sucres?[^\n\d]{0,25}(\d{1,2}(?:[.,]\d{1,2})?)\s*g/i) || t.match(/sugars?[^\n\d]{0,25}(\d{1,2}(?:[.,]\d{1,2})?)\s*g/i);
+  return m ? parseFloat(m[1].replace(",", ".")) : null;
+}
+function loadScript(src) {
+  return new Promise((ok, ko) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = ko; document.head.appendChild(s); });
+}
+document.getElementById("labelGo").onclick = () => {
+  const v = parseFloat(document.getElementById("labelSugar").value);
+  if (!(v >= 0 && v <= 100)) { ls.textContent = "Entre un chiffre entre 0 et 100."; return; }
+  showResult({ name: "Produit photographié", meta: "Valeur lue sur l'étiquette", per100: v, unit: "g",
+    portions: [{ label: "100 g/ml", qty: 100 }, { label: "Canette 330 ml", qty: 330 }, { label: "Boîte 400 g", qty: 400 }], sel: 0 });
+};
+
+// --- Sans emballage ---
+const fl = document.getElementById("foodList");
+function listFoods(q = "") {
+  const n = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  fl.innerHTML = "";
+  const all = [...FENUA, ...FOODS];
+  const list = !q ? all : all.filter(f => n(f[0]).includes(n(q)) || (f[4] && n(q).length >= 4 && "fenua tahiti polynesie".includes(n(q))));
+  list.slice(0, 80).forEach(([name, s, portion, unit, fenua]) => {
+    const li = document.createElement("li");
+    li.innerHTML = `<span></span><span class="g">${fmt(s * portion / 100 / CUBE_G)} 🧊 / ${portion} ${unit}</span>`;
+    li.firstChild.textContent = (fenua ? "🌺 " : "") + name;
+    li.onclick = () => showResult({ name, meta: "Valeur moyenne", per100: s, unit,
+      portions: [{ label: `100 ${unit}`, qty: 100 }, { label: `Portion type (${portion} ${unit})`, qty: portion }], sel: 1,
+      note: "Moyenne indicative : la recette ou la marque peut changer le résultat." });
+    fl.appendChild(li);
+  });
+}
+document.getElementById("foodSearch").oninput = e => listFoods(e.target.value);
+listFoods();
+
+// --- Ma journée (stockée sur le téléphone) ---
+const KEY = "sucre-journee";
+const today = () => new Date().toISOString().slice(0, 10);
+function loadDay() { try { const d = JSON.parse(localStorage.getItem(KEY)); return d && d.date === today() ? d : { date: today(), items: [] }; } catch { return { date: today(), items: [] }; } }
+function saveDay(d) { try { localStorage.setItem(KEY, JSON.stringify(d)); } catch {} }
+function renderDay() {
+  const d = loadDay(), g = d.items.reduce((a, i) => a + i.g, 0), c = g / CUBE_G;
+  document.getElementById("todayTotal").textContent = `${fmt(c)} morceau${c >= 2 ? "x" : ""} · ${fmt(g, 0)} g`;
+  const m = document.getElementById("todayMeter");
+  m.style.width = Math.min(100, g / MAX * 100) + "%";
+  m.style.background = g < IDEAL * .6 ? "var(--ok)" : g < IDEAL ? "var(--mid)" : "var(--bad)";
+  const ul = document.getElementById("todayList");
+  ul.innerHTML = d.items.length ? "" : '<li style="cursor:default;color:var(--muted)">Rien pour l\'instant.</li>';
+  d.items.forEach(i => { const li = document.createElement("li"); li.style.cursor = "default";
+    li.innerHTML = `<span></span><span class="g">${fmt(i.g / CUBE_G)} 🧊</span>`; li.firstChild.textContent = i.name; ul.appendChild(li); });
+}
+document.getElementById("addToday").onclick = () => {
+  const d = loadDay(); d.items.push({ name: current.name, g: current.per100 * qtyNow() / 100 }); saveDay(d); renderDay();
+};
+document.getElementById("resetToday").onclick = () => { saveDay({ date: today(), items: [] }); renderDay(); };
+renderDay();
+</script>
+</body>
+</html>
